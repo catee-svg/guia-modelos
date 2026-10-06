@@ -1,0 +1,342 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Guía de Modelos Luxor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: herramienta de trabajo. Barra de resumen arriba, pestañas de vista, lista de filas escaneables, panel de edición. */
+:root{
+  --bg:#f5f5f8; --surface:#ffffff; --line:#dddde6; --fg:#1d1b26; --muted:#6a6779;
+  --accent:#6b3fa0; --accent-soft:#efe8f8; --on-accent:#ffffff;
+  --hot:#c2410c; --hot-soft:#fdeee5; --ok:#15803d; --ok-soft:#e5f5ea; --warn:#a16207; --warn-soft:#fbf3dc; --off:#7c7a88; --off-soft:#ecebf0;
+  --f-display:"Familjen Grotesk","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15141b; --surface:#1e1d27; --line:#33313f; --fg:#ecebf3; --muted:#9d9aae;
+  --accent:#b48ae8; --accent-soft:#2c2340; --on-accent:#15141b;
+  --hot:#fb923c; --hot-soft:#3a2216; --ok:#4ade80; --ok-soft:#173022; --warn:#facc15; --warn-soft:#332b12; --off:#a3a1b0; --off-soft:#2a2934;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15141b; --surface:#1e1d27; --line:#33313f; --fg:#ecebf3; --muted:#9d9aae;
+  --accent:#b48ae8; --accent-soft:#2c2340; --on-accent:#15141b;
+  --hot:#fb923c; --hot-soft:#3a2216; --ok:#4ade80; --ok-soft:#173022; --warn:#facc15; --warn-soft:#332b12; --off:#a3a1b0; --off-soft:#2a2934;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:700;font-size:1.75rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.9rem}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px;border-radius:var(--r);font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--hot);border-color:var(--hot)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;color:var(--fg)}
+.stat b{display:block;font-family:var(--f-display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:.82rem;color:var(--muted)}
+.stat.hot b{color:var(--hot)} .stat.warn b{color:var(--warn)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{border:1px solid transparent;background:none;color:var(--muted);padding:6px 12px;border-radius:999px;font-weight:500}
+.tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.tab small{font-variant-numeric:tabular-nums;opacity:.8;margin-left:4px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools input,.tools select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--fg);min-width:0}
+.tools input{flex:1 1 220px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:5px 11px;border-radius:999px;font-size:.88rem}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.3fr) minmax(0,1.3fr) auto;gap:6px 16px;align-items:center;border-left:4px solid var(--line)}
+.row.p-alta{border-left-color:var(--hot)} .row.p-media{border-left-color:var(--warn)}
+.row:hover{border-color:var(--accent)}
+.who{min-width:0}
+.name{font-weight:600;font-size:1rem;overflow-wrap:anywhere}
+.code{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);letter-spacing:.02em}
+.meta{font-size:.85rem;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.meta strong{color:var(--fg);font-weight:500}
+.lbl{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.badges{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
+.pill{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.s-nueva{background:var(--off-soft);color:var(--off)}
+.s-cuentas{background:var(--accent-soft);color:var(--accent)}
+.s-agencia{background:var(--warn-soft);color:var(--warn)}
+.s-conectada{background:var(--ok-soft);color:var(--ok)}
+.s-pausada{background:var(--off-soft);color:var(--off);text-decoration:line-through}
+.pr-alta{background:var(--hot-soft);color:var(--hot)}
+.pf{background:var(--warn-soft);color:var(--warn)}
+.why{grid-column:1/-1;font-size:.85rem;color:var(--hot);margin:0}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--muted)}
+.empty h2{font-family:var(--f-display);color:var(--fg);font-size:1.15rem;margin:0 0 6px}
+.note{font-size:.85rem;color:var(--muted)}
+.err{background:var(--hot-soft);color:var(--hot);padding:10px 14px;border-radius:var(--r);font-size:.9rem}
+/* panel */
+.overlay{position:fixed;inset:0;background:rgba(10,8,20,.45);display:flex;justify-content:flex-end;z-index:20}
+.panel{background:var(--surface);width:min(460px,100%);height:100%;overflow-y:auto;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+.panel h2{font-family:var(--f-display);margin:0;font-size:1.3rem}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--fg);width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--fg);padding:8px;border-radius:var(--r);font-weight:500}
+.seg button[aria-pressed="true"].a{background:var(--hot);border-color:var(--hot);color:var(--on-accent)}
+.seg button[aria-pressed="true"].m{background:var(--warn);border-color:var(--warn);color:var(--on-accent)}
+.seg button[aria-pressed="true"].b{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:6px}
+.confirm{background:var(--hot-soft);color:var(--hot);padding:10px;border-radius:var(--r);font-size:.9rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-weight:500;z-index:30}
+@media (max-width:720px){
+  .row{grid-template-columns:minmax(0,1fr) auto}
+  .row .meta{grid-column:1/-1}
+  .badges{grid-row:1;grid-column:2}
+  .two{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.row{transition:border-color .15s}}
+</style>
+
+</head><body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Guía de Modelos</h1>
+      <p class="sub">Interna del equipo · ubicar modelos, renovar portafolios y conectar rápido</p>
+    </div>
+    <button class="btn primary" id="btnAdd" type="button">+ Agregar modelo</button>
+  </header>
+
+  <div id="errBox" class="err" hidden></div>
+
+  <div class="stats">
+    <button class="stat" type="button" data-go="todas"><b id="stTotal">0</b><span>modelos en la guía</span></button>
+    <button class="stat hot" type="button" data-go="prioridad"><b id="stAlta">0</b><span>prioridad alta sin conectar</span></button>
+    <button class="stat warn" type="button" data-go="portafolio"><b id="stPf">0</b><span>portafolios para renovar</span></button>
+    <button class="stat" type="button" data-go="todas" data-estado="Conectada"><b id="stCon">0</b><span>conectadas</span></button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-view="todas">Todas<small id="tcTodas"></small></button>
+    <button class="tab" role="tab" data-view="prioridad">Prioridad<small id="tcPri"></small></button>
+    <button class="tab" role="tab" data-view="scouter">Por scouter</button>
+    <button class="tab" role="tab" data-view="asistente">Por asistente</button>
+    <button class="tab" role="tab" data-view="portafolio">Renovar portafolio<small id="tcPf"></small></button>
+  </nav>
+
+  <div class="chips" id="groupChips" hidden></div>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="Buscar por nombre, código MDL, agencia…" aria-label="Buscar">
+    <select id="fEstado" aria-label="Filtrar por estado"><option value="">Todos los estados</option></select>
+  </div>
+
+  <div class="list" id="list"></div>
+  <p class="note" id="foot"></p>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <form class="panel" id="form" novalidate>
+    <h2 id="formTitle">Agregar modelo</h2>
+    <div class="field"><label for="nombre">Nombre completo</label><input id="nombre" required autocomplete="off"></div>
+    <div class="two">
+      <div class="field"><label for="codigo">Código MDL (opcional)</label><input id="codigo" placeholder="Si no tiene, dejalo vacío" autocomplete="off"></div>
+      <div class="field"><label for="estado">Estado</label><select id="estado"></select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="scouter">Scouter</label><input id="scouter" list="dlScouter" autocomplete="off" placeholder="Elegí o escribí uno nuevo"></div>
+      <div class="field"><label for="asistente">Asistente a cargo</label><input id="asistente" list="dlAsis" autocomplete="off"></div>
+    </div>
+    <div class="field"><label for="agencia">Agencia trabajando</label><input id="agencia" list="dlAgencia" autocomplete="off"></div>
+    <div class="field"><label>Prioridad</label>
+      <div class="seg" id="seg">
+        <button type="button" class="a" data-p="alta">Alta</button>
+        <button type="button" class="m" data-p="media">Media</button>
+        <button type="button" class="b" data-p="baja">Baja</button>
+      </div>
+    </div>
+    <div class="field"><label for="motivo">Por qué hay que conectarla rápido</label><input id="motivo" autocomplete="off" placeholder="Ej: comprador esperando, tiene mucho contenido…"></div>
+    <div class="field"><label for="portafolio">Último portafolio renovado</label><input id="portafolio" type="date"></div>
+    <div class="field"><label for="notas">Notas</label><textarea id="notas"></textarea></div>
+    <div class="confirm" id="confirmDel" hidden>¿Borrar esta modelo de la guía? <button type="button" class="btn danger" id="btnDelYes">Sí, borrar</button><button type="button" class="btn" id="btnDelNo">Cancelar</button></div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="btnDel" hidden>Borrar</button>
+      <span style="display:flex;gap:8px;margin-left:auto">
+        <button type="button" class="btn" id="btnCancel">Cancelar</button>
+        <button type="submit" class="btn primary" id="btnSave">Guardar</button>
+      </span>
+    </div>
+  </form>
+</div>
+<datalist id="dlScouter"></datalist><datalist id="dlAsis"></datalist><datalist id="dlAgencia"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== CONFIG: pegar acá los datos del proyecto de Supabase (Settings → API) =====
+const SUPABASE_URL="https://qwyejicafcppcmfvxtof.supabase.co";        // ej: https://abcdxyz.supabase.co
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3eWVqaWNhZmNwcGNtZnZ4dG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyOTgxNzAsImV4cCI6MjEwNjg3NDE3MH0.J7rO2UyIIrjNjCol_064BgrG_eH61KKG_JbFP8wkov8";           // la "anon public", NUNCA la service_role
+// =================================================================================
+const TABLA="guia_modelos";
+const ESTADOS=[["Nueva","nueva"],["Cuentas disponibles","cuentas"],["En agencia","agencia"],["Conectada","conectada"],["Pausada / caída","pausada"]];
+const SCOUTERS_BASE=["Natia","Hubs","Easy Días","Coti"];
+const DIAS_PORTAFOLIO=30;
+const PR_ORD={alta:0,media:1,baja:2};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let rows=[], db=null, canWrite=true, view="todas", group="", editId=null, prio="media", ready=false;
+
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+for(const [n] of ESTADOS){$("estado").add(new Option(n,n));$("fEstado").add(new Option(n,n));}
+function estadoCls(e){const f=ESTADOS.find(x=>x[0]===e);return f?"s-"+f[1]:"s-nueva"}
+function diasDesde(d){if(!d)return Infinity;const t=Date.parse(d+"T00:00:00");return isNaN(t)?Infinity:Math.floor((Date.now()-t)/864e5)}
+function pfVencido(r){return r.estado!=="Pausada / caída" && diasDesde(r.portafolio)>DIAS_PORTAFOLIO}
+function sinConectar(r){return r.estado!=="Conectada"&&r.estado!=="Pausada / caída"}
+function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+function showErr(t){const e=$("errBox");e.textContent=t;e.hidden=!t}
+
+function uniq(field,base=[]){const s=new Map();for(const v of base)s.set(v.toLowerCase(),v);for(const r of rows){const v=(r[field]||"").trim();if(v&&!s.has(v.toLowerCase()))s.set(v.toLowerCase(),v)}return [...s.values()].sort((a,b)=>a.localeCompare(b,"es"))}
+function fillDl(id,vals){$(id).innerHTML=vals.map(v=>`<option value="${esc(v)}"></option>`).join("")}
+
+function filtered(){
+  const q=$("q").value.trim().toLowerCase(), fe=$("fEstado").value;
+  let out=rows.filter(r=>{
+    if(fe&&r.estado!==fe)return false;
+    if(q&&![r.nombre,r.codigo,r.agencia,r.scouter,r.asistente,r.notas,r.motivo].some(v=>(v||"").toLowerCase().includes(q)))return false;
+    if(view==="prioridad")return r.prioridad==="alta"&&sinConectar(r);
+    if(view==="portafolio")return pfVencido(r);
+    if(view==="scouter"&&group)return (r.scouter||"Sin scouter")===group;
+    if(view==="asistente"&&group)return (r.asistente||"Sin asignar")===group;
+    return true;
+  });
+  out.sort((a,b)=>(PR_ORD[a.prioridad]??1)-(PR_ORD[b.prioridad]??1)||(b.actualizado||0)-(a.actualizado||0));
+  return out;
+}
+
+function renderChips(){
+  const box=$("groupChips");
+  if(view!=="scouter"&&view!=="asistente"){box.hidden=true;return}
+  const key=view==="scouter"?"scouter":"asistente", none=view==="scouter"?"Sin scouter":"Sin asignar";
+  const counts=new Map();
+  if(view==="scouter")for(const s of SCOUTERS_BASE)counts.set(s,0);
+  for(const r of rows){const k=(r[key]||"").trim()||none;counts.set(k,(counts.get(k)||0)+1)}
+  const names=[...counts.keys()].sort((a,b)=>a===none?1:b===none?-1:a.localeCompare(b,"es"));
+  if(group&&!counts.has(group))group="";
+  box.innerHTML=`<button type="button" class="chip" data-g="" aria-pressed="${!group}">Todos</button>`+names.map(n=>`<button type="button" class="chip" data-g="${esc(n)}" aria-pressed="${group===n}">${esc(n)} · ${counts.get(n)}</button>`).join("");
+  box.hidden=false;
+}
+
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===view));
+  const alta=rows.filter(r=>r.prioridad==="alta"&&sinConectar(r)).length, pf=rows.filter(pfVencido).length;
+  $("stTotal").textContent=rows.length;$("stAlta").textContent=alta;$("stPf").textContent=pf;
+  $("stCon").textContent=rows.filter(r=>r.estado==="Conectada").length;
+  $("tcTodas").textContent=rows.length||"";$("tcPri").textContent=alta||"";$("tcPf").textContent=pf||"";
+  fillDl("dlScouter",uniq("scouter",SCOUTERS_BASE));fillDl("dlAsis",uniq("asistente"));fillDl("dlAgencia",uniq("agencia"));
+  renderChips();
+  const list=$("list");
+  if(!ready){list.innerHTML=`<div class="empty"><h2>Cargando la guía…</h2></div>`;return}
+  if(!rows.length){list.innerHTML=`<div class="empty"><h2>Todavía no hay modelos cargadas</h2><p>Tocá <strong>+ Agregar modelo</strong> y cargá la primera: nombre, scouter y en qué estado está (el código MDL es opcional).<br>Lo que cargues lo ve todo el equipo al instante.</p></div>`;$("foot").textContent="";return}
+  const out=filtered();
+  if(!out.length){list.innerHTML=`<div class="empty"><h2>Nada en esta vista</h2><p>${view==="prioridad"?"No hay modelos con prioridad alta pendientes de conectar.":view==="portafolio"?"Todos los portafolios están al día.":"Probá con otra búsqueda o filtro."}</p></div>`}
+  else list.innerHTML=out.map(r=>{
+    const d=diasDesde(r.portafolio);
+    const pfTxt=r.portafolio?(d===0?"hoy":`hace ${d} día${d===1?"":"s"}`):"sin cargar";
+    return `<div class="row p-${esc(r.prioridad||"media")}" tabindex="0" role="button" data-id="${esc(r.id)}">
+      <div class="who"><div class="name">${esc(r.nombre||"(sin nombre)")}</div><div class="code">${esc(r.codigo||"sin código")}</div></div>
+      <div class="meta"><span class="lbl">Scouter · Asistente</span><strong>${esc(r.scouter||"—")}</strong> · ${esc(r.asistente||"sin asignar")}</div>
+      <div class="meta"><span class="lbl">Agencia · Portafolio</span><strong>${esc(r.agencia||"—")}</strong> · ${pfTxt}</div>
+      <div class="badges">${r.prioridad==="alta"?'<span class="pill pr-alta">Prioridad</span>':""}${pfVencido(r)?'<span class="pill pf">Renovar</span>':""}<span class="pill ${estadoCls(r.estado)}">${esc(r.estado||"Nueva")}</span></div>
+      ${r.prioridad==="alta"&&r.motivo?`<p class="why">${esc(r.motivo)}</p>`:""}
+    </div>`}).join("");
+  $("foot").textContent=`Mostrando ${out.length} de ${rows.length}. Un portafolio se marca para renovar a los ${DIAS_PORTAFOLIO} días.`;
+}
+
+function setPrio(p){prio=p;$("seg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p===p))}
+function openForm(r){
+  if(!canWrite){toast("Solo lectura: no tenés permiso para editar");return}
+  editId=r?r.id:null;$("formTitle").textContent=r?"Editar modelo":"Agregar modelo";
+  for(const k of ["codigo","nombre","scouter","asistente","agencia","motivo","portafolio","notas"])$(k).value=r?(r[k]||""):"";
+  $("estado").value=r?.estado||"Nueva";setPrio(r?.prioridad||"media");
+  $("btnDel").hidden=!r;$("confirmDel").hidden=true;$("overlay").hidden=false;setTimeout(()=>$(r?"estado":"nombre").focus(),30);
+}
+function closeForm(){$("overlay").hidden=true;editId=null}
+
+async function save(e){
+  e.preventDefault();
+  const nombre=$("nombre").value.trim();
+  if(!nombre){$("nombre").focus();toast("Falta el nombre completo");return}
+  let codigo=$("codigo").value.trim().toUpperCase();
+  if(codigo&&/^[A-Z0-9]{6}$/.test(codigo))codigo="MDL-"+codigo;
+  const dup=codigo&&rows.find(r=>r.codigo===codigo&&r.id!==editId);
+  if(dup){toast(`${codigo} ya está cargado (${dup.nombre})`);return}
+  const prev=editId?rows.find(r=>r.id===editId):null;
+  const data={codigo,nombre,estado:$("estado").value,scouter:$("scouter").value.trim(),asistente:$("asistente").value.trim(),agencia:$("agencia").value.trim(),prioridad:prio,motivo:$("motivo").value.trim(),portafolio:$("portafolio").value,notas:$("notas").value.trim(),creado:prev?.creado||Date.now(),actualizado:Date.now()};
+  delete data.creado;delete data.actualizado;
+  data.codigo=data.codigo||null;data.portafolio=data.portafolio||null;
+  $("btnSave").disabled=true;
+  try{
+    const q=editId?db.from(TABLA).update(data).eq("id",editId):db.from(TABLA).insert(data);
+    const {error}=await q.select("id").single();
+    if(error)throw error;
+    toast("✓ Guardado");closeForm();await cargar();
+  }catch(err){
+    console.error("Guardar falló:",err);
+    toast(err?.code==="23505"?`${codigo} ya está cargado`:"No se pudo guardar. Probá de nuevo.");
+  }
+  finally{$("btnSave").disabled=false}
+}
+async function del(){
+  if(!editId)return;
+  // No se borra de verdad: queda marcada y se recupera desde Supabase si hace falta.
+  try{
+    const {error}=await db.from(TABLA).update({borrado:true}).eq("id",editId).select("id").single();
+    if(error)throw error;
+    toast("Borrada");closeForm();await cargar();
+  }catch(e){console.error("Borrar falló:",e);toast("No se pudo borrar")}
+}
+async function cargar(){
+  const {data,error}=await db.from(TABLA).select("*").eq("borrado",false);
+  if(error){console.error("Cargar falló:",error);ready=true;showErr("No se pudo leer la guía. Recargá la página.");render();return}
+  rows=data.map(r=>({...r,portafolio:r.portafolio||"",creado:Date.parse(r.creado)||0,actualizado:Date.parse(r.actualizado)||0}));
+  ready=true;showErr("");render();
+}
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view;group="";lsSet("gm_view",view);render()});
+document.querySelectorAll(".stat").forEach(s=>s.onclick=()=>{view=s.dataset.go;group="";$("fEstado").value=s.dataset.estado||"";render()});
+$("groupChips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;group=b.dataset.g;render()};
+$("q").oninput=render;$("fEstado").onchange=render;
+$("list").onclick=e=>{const r=e.target.closest(".row");if(r)openForm(rows.find(x=>x.id===r.dataset.id))};
+$("list").onkeydown=e=>{if(e.key==="Enter"){const r=e.target.closest(".row");if(r)openForm(rows.find(x=>x.id===r.dataset.id))}};
+$("btnAdd").onclick=()=>openForm(null);
+$("btnCancel").onclick=closeForm;
+$("overlay").onclick=e=>{if(e.target===$("overlay"))closeForm()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("overlay").hidden)closeForm()});
+$("seg").onclick=e=>{const b=e.target.closest("button");if(b)setPrio(b.dataset.p)};
+$("form").onsubmit=save;
+$("btnDel").onclick=()=>$("confirmDel").hidden=false;
+$("btnDelNo").onclick=()=>$("confirmDel").hidden=true;
+$("btnDelYes").onclick=del;
+
+const v=lsGet("gm_view");if(v&&["todas","prioridad","scouter","asistente","portafolio"].includes(v))view=v;
+render();
+
+(async()=>{
+  if(!window.supabase||SUPABASE_URL.startsWith("PEGAR")){ready=true;showErr("La guía no está configurada: faltan los datos de Supabase en el archivo.");$("btnAdd").disabled=true;canWrite=false;render();return}
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  await cargar();
+  // Tiempo real: cuando alguien cambia algo, todos recargan la lista.
+  let t=null;const refrescar=()=>{clearTimeout(t);t=setTimeout(cargar,300)};
+  db.channel("guia").on("postgres_changes",{event:"*",schema:"public",table:TABLA},refrescar).subscribe();
+  // Por si el celular estuvo dormido y se perdió algún aviso.
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)cargar()});
+})();
+</script>
+
+</body></html>
